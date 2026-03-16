@@ -1,0 +1,20 @@
+:root {
+  /* Alias útiles para mantener legibilidad semántica */
+  --container-default: min(var(--page-width), calc(100% - var(--page-gutter-wide)));
+  --container-wide: min(var(--page-width-wide), calc(100% - var(--page-gutter)));
+  --container-narrow: min(100%, var(--page-width-narrow));
+
+  --panel-bg-dark: var(--color-bg-panel-dark);
+  --panel-bg-light: var(--color-surface);
+
+  --panel-border-dark: var(--color-border-soft);
+  --panel-border-light: var(--color-surface-border);
+
+  --title-color-dark: var(--color-text);
+  --text-color-dark: var(--color-text-soft);
+  --muted-color-dark: var(--color-text-muted);
+
+  --title-color-light: var(--color-ink);
+  --text-color-light: var(--color-ink-soft);
+  --muted-color-light: var(--color-ink-muted);
+}

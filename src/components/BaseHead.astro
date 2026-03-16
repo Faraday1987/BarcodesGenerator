@@ -1,0 +1,30 @@
+---
+// import "@styles/normalize.css";
+import "@styles/global.scss";
+import "@styles/menu.scss";
+import "@styles/footer.scss";
+
+// import { SEO } from "astro-seo";
+interface Props {
+  title: string;
+  description: string;
+  keywords: string;
+  image?: string;
+  lang?: string;
+  canonicalPath?: string;
+}
+
+const { title, description, keywords, lang, canonicalPath } = Astro.props;
+---
+
+<!-- Global Metadata -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<!-- Primary Meta Tags -->
+<meta name="view-transitions" content="same-origin" />
+<meta name="robots" content="follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large">
+
+<link rel="stylesheet" href="/normalize.css">
+<title>Codigos Generador</title>
+<meta name="keywords" content={keywords}>

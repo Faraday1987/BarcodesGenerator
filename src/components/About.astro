@@ -1,0 +1,31 @@
+---
+import "@styles/about.scss";
+import { t } from "@i18n/t";
+import { locales, type Locale } from "@i18n/config";
+
+interface Props {
+  lang: string;
+}
+
+const { lang } = Astro.props;
+
+const safeLang: Locale =
+  locales.includes(lang as Locale) ? (lang as Locale) : "es";
+
+const i18n = t(safeLang);
+---
+
+<section class="about" aria-labelledby="about-title">
+  <div class="about__inner">
+    <p class="about__eyebrow">{i18n.nav.about}</p>
+
+    <h2 id="about-title" class="about__title">
+      {i18n.about.title}
+    </h2>
+
+    <div class="about__text">
+      <p>{i18n.about.text1}</p>
+      <p>{i18n.about.text2}</p>
+    </div>
+  </div>
+</section>

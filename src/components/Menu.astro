@@ -1,0 +1,54 @@
+---
+import "@styles/menu.scss";
+
+import { t } from "@i18n/t";
+import { locales, type Locale } from "@i18n/config";
+
+interface Props {
+  lang: string;
+}
+
+const { lang } = Astro.props;
+
+const safeLang: Locale = locales.includes(lang as Locale)
+  ? (lang as Locale)
+  : "es";
+
+const i18n = t(safeLang);
+
+const href = (path: string) => {
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `/${safeLang}${cleanPath === "/" ? "" : cleanPath}`;
+};
+---
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a href={href("/")} class="site-header__brand">
+      Barcode Generator
+    </a>
+
+    <nav class="site-nav" aria-label="Main navigation">
+      <ul class="site-nav__list">
+        <li>
+          <a href={href("/")} class="site-nav__link">{i18n.nav.home}</a>
+        </li>
+        <!-- <li>
+          <a href={href("/generator")} class="site-nav__link">{i18n.nav.generator}</a>
+        </li> -->
+        <li>
+          <a href={href("/generator-individual")} class="site-nav__link">Generar individual</a>
+        </li>
+        <li>
+          <a href={href("/excel-generator")} class="site-nav__link">Generar varios</a>
+        </li>
+        <li>
+          <a href={href("/about")} class="site-nav__link">{i18n.nav.about}</a>
+        </li>
+        <li>
+          <a href={href("/contact")} class="site-nav__link">{i18n.nav.contact}</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</header>

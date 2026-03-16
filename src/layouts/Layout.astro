@@ -1,0 +1,36 @@
+---
+import BaseHead from '@components/BaseHead.astro';
+import Footer from '@src/components/Footer.astro';
+import Menu from '@src/components/Menu.astro';
+
+interface Props {
+  title: string
+  description: string
+  keywords: string
+  lang: string
+}
+
+const { title, description, keywords, lang } = Astro.props;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <BaseHead
+      title={title}
+      description={description}
+      keywords={keywords}
+      lang={lang}
+    />
+  </head>
+  <body>
+    <div class="page-shell">
+      <Menu lang={lang} />
+      <main class="page-content">
+        <slot />
+      </main>
+    <Footer />
+    </div>
+
+  </body>
+</html>

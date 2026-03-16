@@ -1,0 +1,27 @@
+{
+  "name": "codigosdebarrasgenerador",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/compiler-rs": "^0.1.4",
+    "@astrojs/sitemap": "^3.7.0",
+    "@astrojs/vercel": "^10.0.0",
+    "@fontsource/twinkle-star": "^5.2.8",
+    "astro": "^6.0.4",
+    "astro-robots-txt": "^1.0.0",
+    "jsbarcode": "^3.12.3",
+    "jszip": "^3.10.1",
+    "xlsx": "^0.18.5",
+    "xmldom": "^0.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.8",
+    "sass": "^1.97.2"
+  }
+}

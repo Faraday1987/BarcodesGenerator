@@ -1,0 +1,16 @@
+---
+export const prerender = false;
+
+const lang = Astro.request.headers
+  .get('accept-language')
+  ?.toLowerCase() ?? '';
+
+let target = '/es';
+if (lang.startsWith('en')) target = '/en';
+if (lang.startsWith('de')) target = '/de';
+
+return new Response(null, {
+  status: 302,
+  headers: { Location: target },
+});
+---

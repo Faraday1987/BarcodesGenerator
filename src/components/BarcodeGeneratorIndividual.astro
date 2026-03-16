@@ -1,0 +1,236 @@
+---
+export const prerender = false;
+import "@styles/generador-individual.scss";
+---
+
+<section class="generator-single">
+  <div class="generator-single__shell">
+    <div class="generator-single__copy">
+      <p class="generator-single__eyebrow">Generador individual</p>
+      <h1 class="generator-single__title">Genera un código de barras individual con vista previa</h1>
+      <p class="generator-single__text">
+        Compatible con EAN13, GTIN-14 y UPC-A. Escribe un solo código válido, genera la vista previa
+        y descarga el archivo en SVG.
+      </p>
+
+      <div class="generator-single__help">
+        <h2>Formato válido por tipo</h2>
+
+        <div class="generator-single__rules">
+          <article class="generator-single__rule">
+            <h3>EAN13</h3>
+            <p>Debe contener exactamente 13 dígitos numéricos.</p>
+            <strong>Ejemplo: 7501031311309</strong>
+          </article>
+
+          <article class="generator-single__rule">
+            <h3>GTIN-14</h3>
+            <p>Debe contener exactamente 14 dígitos numéricos.</p>
+            <strong>Ejemplo: 10070659199285</strong>
+          </article>
+
+          <article class="generator-single__rule">
+            <h3>UPC-A</h3>
+            <p>Debe contener exactamente 12 dígitos numéricos.</p>
+            <strong>Ejemplo: 036542817295</strong>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="generator-single__panel">
+      <div class="generator-options">
+        <h2>Opciones</h2>
+
+        <div class="generator-options__grid">
+          <label class="generator-field">
+            <span>Width</span>
+            <input type="number" id="opt-width" value="2" min="1" step="0.5" />
+          </label>
+
+          <label class="generator-field">
+            <span>Height</span>
+            <input type="number" id="opt-height" value="110" min="40" />
+          </label>
+
+          <label class="generator-field">
+            <span>Margin</span>
+            <input type="number" id="opt-margin" value="10" min="0" />
+          </label>
+
+          <label class="generator-field">
+            <span>Background</span>
+            <input type="color" id="opt-background" value="#ffffff" />
+          </label>
+
+          <label class="generator-field">
+            <span>Line color</span>
+            <input type="color" id="opt-lineColor" value="#000000" />
+          </label>
+
+          <label class="generator-check">
+            <input type="checkbox" id="opt-displayValue" checked />
+            <span>Mostrar valor</span>
+          </label>
+        </div>
+      </div>
+
+      <form id="individualForm" class="generator-form">
+        <label class="generator-field">
+          <span>Tipo de código</span>
+          <select name="tipo" id="individualTipo" required>
+            <option value="ean13">EAN13</option>
+            <option value="gtin14">GTIN-14</option>
+            <option value="upc">UPC-A</option>
+          </select>
+        </label>
+
+        <label class="generator-field">
+          <span>Código</span>
+          <input
+            type="text"
+            name="codigo"
+            id="individualCodigo"
+            placeholder="Escribe 13 dígitos para EAN13"
+            inputmode="numeric"
+            autocomplete="off"
+            required
+          />
+        </label>
+
+        <button type="submit" class="generator-button--primary">
+          Generar vista previa
+        </button>
+
+        <p id="individualStatus" class="generator-status" aria-live="polite"></p>
+      </form>
+
+      <div class="generator-preview">
+        <h2>Vista previa</h2>
+        <div id="barcodePreview" class="generator-preview__canvas"></div>
+
+        <button
+          type="button"
+          id="downloadSingleSvg"
+          class="generator-button generator-button--primary"
+          disabled
+        >
+          Descargar SVG
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const individualForm = document.getElementById("individualForm");
+  const individualTipo = document.getElementById("individualTipo");
+  const individualCodigo = document.getElementById("individualCodigo");
+  const individualStatus = document.getElementById("individualStatus");
+  const preview = document.getElementById("barcodePreview");
+  const downloadSingleSvg = document.getElementById("downloadSingleSvg");
+
+  let currentSvg = "";
+  let currentFilename = "barcode.svg";
+
+  function getSharedOptions() {
+    const width = document.getElementById("opt-width");
+    const height = document.getElementById("opt-height");
+    const margin = document.getElementById("opt-margin");
+    const background = document.getElementById("opt-background");
+    const lineColor = document.getElementById("opt-lineColor");
+    const displayValue = document.getElementById("opt-displayValue");
+
+    return {
+      width: width?.value ?? "2",
+      height: height?.value ?? "110",
+      margin: margin?.value ?? "10",
+      background: background?.value ?? "#ffffff",
+      lineColor: lineColor?.value ?? "#000000",
+      displayValue: displayValue?.checked ? "true" : "false"
+    };
+  }
+
+  function getPlaceholderByType(tipo) {
+    if (tipo === "ean13") return "Escribe 13 dígitos para EAN13";
+    if (tipo === "gtin14") return "Escribe 14 dígitos para GTIN-14";
+    if (tipo === "upc") return "Escribe 12 dígitos para UPC-A";
+    return "Escribe el código...";
+  }
+
+  function updateIndividualPlaceholder() {
+    if (!individualTipo || !individualCodigo) return;
+    individualCodigo.placeholder = getPlaceholderByType(individualTipo.value);
+  }
+
+  function limpiarPreview() {
+    currentSvg = "";
+    currentFilename = "barcode.svg";
+
+    if (preview) preview.innerHTML = "";
+    if (downloadSingleSvg) downloadSingleSvg.disabled = true;
+  }
+
+  individualTipo?.addEventListener("change", () => {
+    updateIndividualPlaceholder();
+    limpiarPreview();
+    if (individualStatus) individualStatus.textContent = "";
+  });
+
+  updateIndividualPlaceholder();
+
+  individualForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(individualForm);
+    const options = getSharedOptions();
+
+    Object.entries(options).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+
+    if (individualStatus) individualStatus.textContent = "Generando vista previa...";
+    limpiarPreview();
+
+    try {
+      const response = await fetch("/api/generar-individual", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "No se pudo generar el código.");
+      }
+
+      currentSvg = data.svg;
+      currentFilename = data.filename || "barcode.svg";
+
+      if (preview) preview.innerHTML = data.svg;
+      if (downloadSingleSvg) downloadSingleSvg.disabled = false;
+      if (individualStatus) individualStatus.textContent = "Código generado correctamente.";
+    } catch (error) {
+      if (individualStatus) {
+        individualStatus.textContent =
+          error instanceof Error ? error.message : "Error inesperado.";
+      }
+    }
+  });
+
+  downloadSingleSvg?.addEventListener("click", () => {
+    if (!currentSvg) return;
+
+    const blob = new Blob([currentSvg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = currentFilename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+  });
+</script>

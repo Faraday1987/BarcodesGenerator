@@ -1,0 +1,22 @@
+---
+import Layout from '@layouts/Layout.astro';
+import { locales, type Locale } from '@i18n/config';
+import { t } from '@i18n/t';
+import BarcodeGeneratorIndividual from '@src/components/BarcodeGeneratorIndividual.astro';
+
+export function getStaticPaths() {
+  return locales.map(lang => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params as { lang: Locale };
+const i18n = t(lang);
+---
+
+<Layout
+  title="Generador individual de códigos de barras"
+  description="Genera un código de barras individual en EAN13, GTIN-14 o UPC-A con vista previa."
+  keywords={i18n.siteinfo.keywords}
+  lang={lang}
+>
+  <BarcodeGeneratorIndividual />
+</Layout>

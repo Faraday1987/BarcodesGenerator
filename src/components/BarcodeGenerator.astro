@@ -1,0 +1,325 @@
+---
+export const prerender = false;
+
+import "@styles/generador.scss";
+---
+
+<section class="generator-section">
+  <div class="generator-shell">
+    <div class="generator-copy">
+      <p class="generator-eyebrow">Barcode Generator</p>
+      <h1 class="generator-title">Genera códigos de barras desde Excel o individualmente</h1>
+      <p class="generator-text">
+        Compatible con EAN13, GTIN-14 y UPC-A. Puedes generar un código individual
+        con vista previa o subir un Excel para procesar varios al mismo tiempo.
+      </p>
+    </div>
+
+    <div class="generator-panel">
+      <div class="generator-tabs">
+        <button type="button" class="generator-tab is-active" data-tab="individual">
+          Individual
+        </button>
+        <button type="button" class="generator-tab" data-tab="excel">
+          Por Excel
+        </button>
+      </div>
+
+      <div class="generator-options">
+        <h2>Opciones mínimas</h2>
+
+        <div class="generator-options__grid">
+          <label class="generator-field">
+            <span>Width</span>
+            <input type="number" id="opt-width" value="2" min="1" step="0.5" />
+          </label>
+
+          <label class="generator-field">
+            <span>Height</span>
+            <input type="number" id="opt-height" value="100" min="40" />
+          </label>
+
+          <label class="generator-field">
+            <span>Margin</span>
+            <input type="number" id="opt-margin" value="10" min="0" />
+          </label>
+
+          <label class="generator-field">
+            <span>Background</span>
+            <input type="color" id="opt-background" value="#ffffff" />
+          </label>
+
+          <label class="generator-field">
+            <span>Line color</span>
+            <input type="color" id="opt-lineColor" value="#000000" />
+          </label>
+
+          <label class="generator-check">
+            <input type="checkbox" id="opt-displayValue" checked />
+            <span>Mostrar valor</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="generator-mode is-active" data-mode="individual">
+        <form id="individualForm" class="generator-form">
+          <label class="generator-field">
+            <span>Tipo de código</span>
+            <select name="tipo" id="individualTipo" required>
+              <option value="ean13">EAN13</option>
+              <option value="gtin14">GTIN-14</option>
+              <option value="upc">UPC-A</option>
+            </select>
+          </label>
+
+          <label class="generator-field">
+            <span>Código</span>
+            <input
+              type="text"
+              name="codigo"
+              id="individualCodigo"
+              placeholder="Escribe 13 dígitos para EAN13"
+              inputmode="numeric"
+              autocomplete="off"
+              required
+            />
+          </label>
+
+          <button type="submit" class="generator-button">Generar vista previa</button>
+          <p id="individualStatus" class="generator-status" aria-live="polite"></p>
+        </form>
+
+        <div class="generator-preview">
+          <div id="barcodePreview" class="generator-preview__canvas"></div>
+
+          <button
+            type="button"
+            id="downloadSingleSvg"
+            class="generator-button generator-button--ghost"
+            disabled
+          >
+            Descargar SVG
+          </button>
+        </div>
+      </div>
+
+      <div class="generator-mode" data-mode="excel">
+        <form id="excelForm" class="generator-form">
+          <label class="generator-field">
+            <span>Tipo de código</span>
+            <select name="tipo" required>
+              <option value="ean13">EAN13</option>
+              <option value="gtin14">GTIN-14</option>
+              <option value="upc">UPC-A</option>
+            </select>
+          </label>
+
+          <label class="generator-field">
+            <span>Archivo Excel</span>
+            <input type="file" name="archivo" accept=".xlsx,.xls" required />
+          </label>
+
+          <button type="submit" class="generator-button">Generar ZIP</button>
+          <p id="excelStatus" class="generator-status" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const tabs = document.querySelectorAll(".generator-tab");
+  const modes = document.querySelectorAll(".generator-mode");
+
+  const individualForm = document.getElementById("individualForm");
+  const individualTipo = document.getElementById("individualTipo");
+  const individualCodigo = document.getElementById("individualCodigo");
+  const individualStatus = document.getElementById("individualStatus");
+  const preview = document.getElementById("barcodePreview");
+  const downloadSingleSvg = document.getElementById("downloadSingleSvg");
+
+  const excelForm = document.getElementById("excelForm");
+  const excelStatus = document.getElementById("excelStatus");
+
+  let currentSvg = "";
+  let currentFilename = "barcode.svg";
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const target = tab.dataset.tab;
+
+      tabs.forEach((t) => t.classList.remove("is-active"));
+      modes.forEach((m) => m.classList.remove("is-active"));
+
+      tab.classList.add("is-active");
+      document.querySelector(`[data-mode="${target}"]`)?.classList.add("is-active");
+    });
+  });
+
+  function getSharedOptions() {
+    const width = document.getElementById("opt-width");
+    const height = document.getElementById("opt-height");
+    const margin = document.getElementById("opt-margin");
+    const background = document.getElementById("opt-background");
+    const lineColor = document.getElementById("opt-lineColor");
+    const displayValue = document.getElementById("opt-displayValue");
+
+    return {
+      width: width?.value ?? "2",
+      height: height?.value ?? "100",
+      margin: margin?.value ?? "10",
+      background: background?.value ?? "#ffffff",
+      lineColor: lineColor?.value ?? "#000000",
+      displayValue: displayValue?.checked ? "true" : "false"
+    };
+  }
+
+  function getPlaceholderByType(tipo) {
+    if (tipo === "ean13") return "Escribe 13 dígitos para EAN13";
+    if (tipo === "gtin14") return "Escribe 14 dígitos para GTIN-14";
+    if (tipo === "upc") return "Escribe 12 dígitos para UPC-A";
+    return "Escribe el código...";
+  }
+
+  function updateIndividualPlaceholder() {
+    if (!individualTipo || !individualCodigo) return;
+    individualCodigo.placeholder = getPlaceholderByType(individualTipo.value);
+  }
+
+  function limpiarPreview() {
+    currentSvg = "";
+    currentFilename = "barcode.svg";
+
+    if (preview) preview.innerHTML = "";
+    if (downloadSingleSvg) downloadSingleSvg.disabled = true;
+  }
+
+  individualTipo?.addEventListener("change", () => {
+    updateIndividualPlaceholder();
+    limpiarPreview();
+    if (individualStatus) individualStatus.textContent = "";
+  });
+
+  updateIndividualPlaceholder();
+
+  individualForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(individualForm);
+    const options = getSharedOptions();
+
+    Object.entries(options).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+
+    if (individualStatus) individualStatus.textContent = "Generando vista previa...";
+    limpiarPreview();
+
+    try {
+      const response = await fetch("/api/generar-individual", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await response.json();
+      console.log("Respuesta API individual:", data);
+
+      if (!response.ok) {
+        throw new Error(data?.error || "No se pudo generar el código.");
+      }
+
+      currentSvg = data.svg;
+      currentFilename = data.filename || "barcode.svg";
+
+      if (preview) {
+        preview.innerHTML = data.svg;
+      }
+
+      if (downloadSingleSvg) {
+        downloadSingleSvg.disabled = false;
+      }
+
+      if (individualStatus) {
+        individualStatus.textContent = "Código generado correctamente.";
+      }
+    } catch (error) {
+      console.error("Error individual:", error);
+
+      if (individualStatus) {
+        individualStatus.textContent =
+          error instanceof Error ? error.message : "Error inesperado.";
+      }
+    }
+  });
+
+  downloadSingleSvg?.addEventListener("click", () => {
+    if (!currentSvg) return;
+
+    const blob = new Blob([currentSvg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = currentFilename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+  });
+
+  excelForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(excelForm);
+    const options = getSharedOptions();
+
+    Object.entries(options).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+
+    if (excelStatus) excelStatus.textContent = "Procesando archivo...";
+
+    try {
+      const response = await fetch("/api/generar-codigos", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) {
+        let message = "Ocurrió un error al generar los códigos.";
+
+        try {
+          const errorData = await response.json();
+          if (errorData?.error) message = errorData.error;
+        } catch {}
+
+        throw new Error(message);
+      }
+
+      const tipo = formData.get("tipo") || "codigos";
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `codigos-${tipo}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+
+      if (excelStatus) {
+        excelStatus.textContent = "ZIP generado correctamente.";
+      }
+    } catch (error) {
+      console.error("Error excel:", error);
+
+      if (excelStatus) {
+        excelStatus.textContent =
+          error instanceof Error ? error.message : "Error inesperado.";
+      }
+    }
+  });
+</script>

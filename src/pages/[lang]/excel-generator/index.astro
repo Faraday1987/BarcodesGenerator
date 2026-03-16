@@ -1,0 +1,22 @@
+---
+import Layout from '@layouts/Layout.astro';
+import { locales, type Locale } from '@i18n/config';
+import { t } from '@i18n/t';
+import BarcodeGeneratorExcel from '@src/components/BarcodeGeneratorExcel.astro';
+
+export function getStaticPaths() {
+  return locales.map(lang => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params as { lang: Locale };
+const i18n = t(lang);
+---
+
+<Layout
+  title="Generador masivo de códigos de barras por Excel"
+  description="Sube un archivo Excel para generar varios códigos de barras en EAN13, GTIN-14 o UPC-A."
+  keywords={i18n.siteinfo.keywords}
+  lang={lang}
+>
+  <BarcodeGeneratorExcel />
+</Layout>

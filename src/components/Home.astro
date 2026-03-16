@@ -1,0 +1,268 @@
+---
+import "@styles/home.scss";
+
+import { t } from "@i18n/t";
+import { locales, type Locale } from "@i18n/config";
+
+interface Props {
+  lang: string;
+}
+
+const { lang } = Astro.props;
+
+const safeLang: Locale = locales.includes(lang as Locale)
+  ? (lang as Locale)
+  : "es";
+
+const i18n = t(safeLang);
+
+const href = (path: string) => {
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `/${safeLang}${cleanPath === "/" ? "" : cleanPath}`;
+};
+---
+
+<section class="home">
+  <div class="home__inner">
+    <div class="home__copy">
+      <p class="home__eyebrow">Barcode Generator</p>
+
+      <h1 class="home__title">
+        Generador de códigos de barras
+      </h1>
+
+      <p class="home__text">
+        Genera códigos individuales o varios desde Excel en formatos EAN13, GTIN-14 y UPC-A.
+        Vista limpia, ejemplos visuales y exportación lista para usar.
+      </p>
+
+      <div class="home__actions">
+        <a href={href("/generator-individual")} class="home__button home__button--primary">
+          Generar individual
+        </a>
+
+        <a href={href("/generator-excel")} class="home__button home__button--ghost">
+          Generar varios por Excel
+        </a>
+      </div>
+    </div>
+
+    <div class="home__visual">
+      <article class="barcode-card" data-barcode-card data-type="ean13">
+        <div class="barcode-card__top">
+          <p class="barcode-card__label">EAN13</p>
+          <span class="barcode-card__dot"></span>
+        </div>
+
+        <div class="barcode-card__svg-wrap">
+          <svg class="barcode-card__svg" data-barcode-svg="ean13"></svg>
+        </div>
+
+        <p class="barcode-card__value" data-barcode-value="ean13">0000000000000</p>
+      </article>
+
+      <article class="barcode-card" data-barcode-card data-type="gtin14">
+        <div class="barcode-card__top">
+          <p class="barcode-card__label">GTIN-14</p>
+          <span class="barcode-card__dot"></span>
+        </div>
+
+        <div class="barcode-card__svg-wrap">
+          <svg class="barcode-card__svg" data-barcode-svg="gtin14"></svg>
+        </div>
+
+        <p class="barcode-card__value" data-barcode-value="gtin14">00000000000000</p>
+      </article>
+
+      <article class="barcode-card" data-barcode-card data-type="upc">
+        <div class="barcode-card__top">
+          <p class="barcode-card__label">UPC-A</p>
+          <span class="barcode-card__dot"></span>
+        </div>
+
+        <div class="barcode-card__svg-wrap">
+          <svg class="barcode-card__svg" data-barcode-svg="upc"></svg>
+        </div>
+
+        <p class="barcode-card__value" data-barcode-value="upc">000000000000</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<script>
+  import JsBarcode from "jsbarcode";
+
+  const DEFAULT_SHARED_OPTIONS = {
+    width: 2,
+    height: 100,
+    displayValue: true,
+    margin: 10,
+    background: "#FFFFFF",
+    lineColor: "#000000"
+  };
+
+  const BARCODE_CONFIG = {
+    ean13: {
+      format: "EAN13",
+      values: [
+        "2224183477925",
+        "2466732905569",
+        "7068087095084",
+        "4194490622661",
+        "4047121843891"
+      ],
+      colors: [
+        { background: "#EAF1FF", lineColor: "#111827" },
+        { background: "#EEF8F1", lineColor: "#3F3F46" },
+        { background: "#EEF8F1", lineColor: "#1E3A8A" },
+        { background: "#FFF4EA", lineColor: "#7F1D1D" },
+        { background: "#F4EEFF", lineColor: "#164E63" },
+        { background: "#EDF7FF", lineColor: "#5B21B6" }
+      ],
+      extraOptions: {}
+    },
+
+    gtin14: {
+      format: "ITF14",
+      values: [
+        "10433218196000",
+        "13389083863790",
+        "40265423511610",
+        "55940781618493",
+        "64835030564134"
+      ],
+      colors: [
+        { background: "#EAF1FF", lineColor: "#1E3A8A" },
+        { background: "#EAF1FF", lineColor: "#111827" },
+        { background: "#EEF8F1", lineColor: "#3F3F46" },
+        { background: "#EEF8F1", lineColor: "#1E3A8A" },
+        { background: "#FFF4EA", lineColor: "#7F1D1D" },
+        { background: "#F4EEFF", lineColor: "#164E63" },
+        { background: "#EDF7FF", lineColor: "#5B21B6" }
+      ],
+      extraOptions: {
+        textMargin: 4,
+        fontOptions: "bold",
+        fontSize: 16,
+        marginTop: 20,
+        marginBottom: 20
+      }
+    },
+
+    upc: {
+      format: "UPC",
+      values: [
+        "036542817295",
+        "781245903164",
+        "094731628503",
+        "615204987318",
+        "428190735647"
+      ],
+      colors: [
+        { background: "#EAF1FF", lineColor: "#111827" },
+        { background: "#EEF8F1", lineColor: "#3F3F46" },
+        { background: "#EEF8F1", lineColor: "#1E3A8A" },
+        { background: "#FFF4EA", lineColor: "#7F1D1D" },
+        { background: "#F4EEFF", lineColor: "#164E63" },
+        { background: "#EDF7FF", lineColor: "#5B21B6" }
+      ],
+      extraOptions: {
+        textMargin: 4,
+        fontOptions: "bold",
+        fontSize: 16
+      }
+    }
+  };
+
+  const activeIntervals = [];
+
+  function getCardNodes(type) {
+    return {
+      svg: document.querySelector(`[data-barcode-svg="${type}"]`),
+      valueNode: document.querySelector(`[data-barcode-value="${type}"]`),
+      card: document.querySelector(`[data-type="${type}"]`)
+    };
+  }
+
+  function buildBarcodeOptions(type, stepIndex) {
+    const config = BARCODE_CONFIG[type];
+    const value = config.values[stepIndex % config.values.length];
+    const palette = config.colors[stepIndex % config.colors.length];
+
+    return {
+      value,
+      palette,
+      options: {
+        ...DEFAULT_SHARED_OPTIONS,
+        format: config.format,
+        background: palette.background,
+        lineColor: palette.lineColor,
+        text: value,
+        ...config.extraOptions
+      }
+    };
+  }
+
+  function renderBarcode(type, stepIndex) {
+    const { svg, valueNode, card } = getCardNodes(type);
+    if (!svg || !valueNode || !card) return;
+
+    const { value, palette, options } = buildBarcodeOptions(type, stepIndex);
+
+    // card.style.setProperty("--card-bg", palette.background);
+    card.style.setProperty("--card-line", palette.lineColor);
+    
+    valueNode.textContent = value;
+
+    svg.innerHTML = "";
+
+    try {
+      JsBarcode(svg, value, options);
+
+      card.classList.remove("is-animating");
+      requestAnimationFrame(() => {
+        card.classList.add("is-animating");
+      });
+    } catch (error) {
+      console.error(`Error generando ${type}:`, error);
+    }
+  }
+
+  function mountAnimatedBarcode(type, delay = 0) {
+    let step = 0;
+
+    const run = () => {
+      renderBarcode(type, step);
+      step += 1;
+    };
+
+    const startTimeout = window.setTimeout(() => {
+      run();
+      const intervalId = window.setInterval(run, 3000);
+      activeIntervals.push(intervalId);
+    }, delay);
+
+    activeIntervals.push(startTimeout);
+  }
+
+  function startBarcodeLoop() {
+    mountAnimatedBarcode("ean13", 0);
+    mountAnimatedBarcode("gtin14", 450);
+    mountAnimatedBarcode("upc", 900);
+  }
+
+  function cleanupBarcodeLoop() {
+    activeIntervals.forEach((id) => {
+      window.clearInterval(id);
+      window.clearTimeout(id);
+    });
+    activeIntervals.length = 0;
+  }
+
+  cleanupBarcodeLoop();
+  startBarcodeLoop();
+
+  window.addEventListener("pagehide", cleanupBarcodeLoop);
+  document.addEventListener("astro:before-swap", cleanupBarcodeLoop);
+</script>
