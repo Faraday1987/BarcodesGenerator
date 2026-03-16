@@ -8,7 +8,6 @@ import vercel from "@astrojs/vercel";
 export default defineConfig({
   adapter: vercel(),
   experimental: {
-    rustCompiler: true,
     queuedRendering: {
       enabled: true,
     },
